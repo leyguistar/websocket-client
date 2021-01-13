@@ -66,6 +66,7 @@ class SSLDispatcher:
                 if not read_callback():
                     break
             check_callback()
+        print('saliendo del loop')
 
     def select(self):
         sock = self.app.sock.sock
@@ -180,7 +181,7 @@ class WebSocketApp(object):
                     http_no_proxy=None, http_proxy_auth=None,
                     skip_utf8_validation=False,
                     host=None, origin=None, dispatcher=None,
-                    suppress_origin=False, proxy_type=None):
+                    suppress_origin=False, proxy_type=None,max_active_time=3600):
         """
         run event loop for WebSocket framework.
         This loop is infinite loop and is alive during websocket is available.
@@ -206,7 +207,7 @@ class WebSocketApp(object):
         False if caught KeyboardInterrupt
         True if other exception was raised during a loop
         """
-
+        start_time = time.time()
         if ping_timeout is not None and ping_timeout <= 0:
             ping_timeout = None
         if ping_timeout and ping_interval and ping_interval <= ping_timeout:
@@ -266,7 +267,8 @@ class WebSocketApp(object):
                 thread.start()
 
             def read():
-                if not self.keep_running:
+                if not self.keep_running or time.time() > start_time + max_active_time:
+                    print('tearing down')
                     return teardown()
 
                 op_code, frame = self.sock.recv_data_frame(True)
