@@ -53,7 +53,6 @@ class Dispatcher:
                 if not read_callback():
                     break
             check_callback()
-
 class SSLDispatcher:
     def __init__(self, app, ping_timeout):
         self.app = app
@@ -66,7 +65,7 @@ class SSLDispatcher:
                 if not read_callback():
                     break
             check_callback()
-        print('saliendo del loop')
+        # print('saliendo del loop')
 
     def select(self):
         sock = self.app.sock.sock
@@ -222,7 +221,7 @@ class WebSocketApp(object):
         self.keep_running = True
         self.last_ping_tm = 0
         self.last_pong_tm = 0
-
+        ping_thread = None
         def teardown(close_frame=None):
             """
             Tears down the connection.
@@ -239,6 +238,10 @@ class WebSocketApp(object):
                 close_frame.data if close_frame else None)
             self._callback(self.on_close, *close_args)
             self.sock = None
+            if(ping_thread):
+                # print('esperando por ping_thread')
+                ping_thread.join()
+            # print('listo terminado todo')
 
         try:
             self.sock = WebSocket(
@@ -265,10 +268,11 @@ class WebSocketApp(object):
                     target=self._send_ping, args=(ping_interval, event))
                 thread.setDaemon(True)
                 thread.start()
+                ping_thread = thread
 
             def read():
                 if not self.keep_running or time.time() > start_time + max_active_time:
-                    print('tearing down')
+                    # print('tearing down')
                     return teardown()
 
                 op_code, frame = self.sock.recv_data_frame(True)
