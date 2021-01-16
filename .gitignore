@@ -11,3 +11,5 @@ dist
 compliance/reports/
 .eggs
 .vscode
+
+update.sh
